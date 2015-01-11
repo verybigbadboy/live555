@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // An class that can be used to create (possibly multiple) 'replicas' of an incoming stream.
 // Implementation.
 
@@ -189,7 +189,7 @@ void StreamReplicator::removeStreamReplica(StreamReplica* replicaBeingRemoved) {
 
   // If this was the last replica, then delete ourselves (if we were set up to do so):
   if (fNumReplicas == 0 && fDeleteWhenLastReplicaDies) {
-    delete this;
+    Medium::close(this);
     return;
   }
 

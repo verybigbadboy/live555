@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // A subclass of "ServerMediaSession" that can be used to create a (unicast) RTSP servers that acts as a 'proxy' for
 // another (unicast or multicast) RTSP/RTP stream.
 // Implementation
@@ -558,18 +558,12 @@ RTPSink* ProxyServerMediaSubsession
 					      fClientMediaSubsession.rtpTimestampFrequency()); 
   } else if (strcmp(codecName, "H264") == 0) {
     newSink = H264VideoRTPSink::createNew(envir(), rtpGroupsock, rtpPayloadTypeIfDynamic,
-					  fClientMediaSubsession.fmtp_spropparametersets(),
-					  fClientMediaSubsession.attrVal_unsigned("profile-level-id"));
+					  fClientMediaSubsession.fmtp_spropparametersets());
   } else if (strcmp(codecName, "H265") == 0) {
     newSink = H265VideoRTPSink::createNew(envir(), rtpGroupsock, rtpPayloadTypeIfDynamic,
 					  fClientMediaSubsession.fmtp_spropvps(),
 					  fClientMediaSubsession.fmtp_spropsps(),
-					  fClientMediaSubsession.fmtp_sproppps(),
-					  fClientMediaSubsession.attrVal_unsigned("profile-space"),
-					  fClientMediaSubsession.attrVal_unsigned("profile-id"),
-					  fClientMediaSubsession.attrVal_unsigned("tier-flag"),
-					  fClientMediaSubsession.attrVal_unsigned("level-id"),
-					  fClientMediaSubsession.attrVal_str("interop-constraints"));
+					  fClientMediaSubsession.fmtp_sproppps());
   } else if (strcmp(codecName, "JPEG") == 0) {
     newSink = SimpleRTPSink::createNew(envir(), rtpGroupsock, 26, 90000, "video", "JPEG",
 				       1/*numChannels*/, False/*allowMultipleFramesPerPacket*/, False/*doNormalMBitRule*/);
@@ -591,7 +585,7 @@ RTPSink* ProxyServerMediaSubsession
     newSink = MPEG4GenericRTPSink::createNew(envir(), rtpGroupsock,
 					     rtpPayloadTypeIfDynamic, fClientMediaSubsession.rtpTimestampFrequency(),
 					     fClientMediaSubsession.mediumName(),
-					     fClientMediaSubsession.attrVal_str("mode"),
+					     fClientMediaSubsession.attrVal_strToLower("mode"),
 					     fClientMediaSubsession.fmtp_config(), fClientMediaSubsession.numChannels());
   } else if (strcmp(codecName, "MPV") == 0) {
     newSink = MPEG1or2VideoRTPSink::createNew(envir(), rtpGroupsock);
@@ -609,6 +603,8 @@ RTPSink* ProxyServerMediaSubsession
 					    fClientMediaSubsession.fmtp_config()); 
   } else if (strcmp(codecName, "VP8") == 0) {
     newSink = VP8VideoRTPSink::createNew(envir(), rtpGroupsock, rtpPayloadTypeIfDynamic);
+  } else if (strcmp(codecName, "VP9") == 0) {
+    newSink = VP9VideoRTPSink::createNew(envir(), rtpGroupsock, rtpPayloadTypeIfDynamic);
   } else if (strcmp(codecName, "AMR") == 0 || strcmp(codecName, "AMR-WB") == 0) {
     // Proxying of these codecs is currently *not* supported, because the data received by the "RTPSource" object is not in a
     // form that can be fed directly into a corresponding "RTPSink" object.

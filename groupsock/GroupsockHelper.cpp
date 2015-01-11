@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "mTunnel" multicast access service
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // Helper routines to implement 'group sockets'
 // Implementation
 
@@ -181,17 +181,29 @@ Boolean makeSocketNonBlocking(int sock) {
 #endif
 }
 
-Boolean makeSocketBlocking(int sock) {
+Boolean makeSocketBlocking(int sock, unsigned writeTimeoutInMilliseconds) {
+  Boolean result;
 #if defined(__WIN32__) || defined(_WIN32)
   unsigned long arg = 0;
-  return ioctlsocket(sock, FIONBIO, &arg) == 0;
+  result = ioctlsocket(sock, FIONBIO, &arg) == 0;
 #elif defined(VXWORKS)
   int arg = 0;
-  return ioctl(sock, FIONBIO, (int)&arg) == 0;
+  result = ioctl(sock, FIONBIO, (int)&arg) == 0;
 #else
   int curFlags = fcntl(sock, F_GETFL, 0);
-  return fcntl(sock, F_SETFL, curFlags&(~O_NONBLOCK)) >= 0;
+  result = fcntl(sock, F_SETFL, curFlags&(~O_NONBLOCK)) >= 0;
 #endif
+
+  if (writeTimeoutInMilliseconds > 0) {
+#ifdef SO_SNDTIMEO
+    struct timeval tv;
+    tv.tv_sec = writeTimeoutInMilliseconds/1000;
+    tv.tv_usec = (writeTimeoutInMilliseconds%1000)*1000;
+    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof tv);
+#endif
+  }
+
+  return result;
 }
 
 int setupStreamSocket(UsageEnvironment& env,
@@ -700,7 +712,9 @@ char const* timestampString() {
 
 #if !defined(_WIN32_WCE)
   static char timeString[9]; // holds hh:mm:ss plus trailing '\0'
-  char const* ctimeResult = ctime((time_t*)&tvNow.tv_sec);
+
+  time_t tvNow_t = tvNow.tv_sec;
+  char const* ctimeResult = ctime(&tvNow_t);
   if (ctimeResult == NULL) {
     sprintf(timeString, "??:??:??");
   } else {

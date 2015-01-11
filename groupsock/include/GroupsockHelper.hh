@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "mTunnel" multicast access service
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // Helper routines to implement 'group sockets'
 // C++ header
 
@@ -55,7 +55,8 @@ unsigned increaseReceiveBufferTo(UsageEnvironment& env,
 				 int socket, unsigned requestedSize);
 
 Boolean makeSocketNonBlocking(int sock);
-Boolean makeSocketBlocking(int sock);
+Boolean makeSocketBlocking(int sock, unsigned writeTimeoutInMilliseconds = 0);
+  // A "writeTimeoutInMilliseconds" value of 0 means: Don't timeout
 
 Boolean socketJoinGroup(UsageEnvironment& env, int socket,
 			netAddressBits groupAddress);

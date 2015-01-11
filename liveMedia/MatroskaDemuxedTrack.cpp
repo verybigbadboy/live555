@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // A media track, demultiplexed from a Matroska file
 // Implementation
 
@@ -27,7 +27,8 @@ void MatroskaDemuxedTrack::seekToTime(double& seekNPT) {
 
 MatroskaDemuxedTrack::MatroskaDemuxedTrack(UsageEnvironment& env, unsigned trackNumber, MatroskaDemux& sourceDemux)
   : FramedSource(env),
-    fOurTrackNumber(trackNumber), fOurSourceDemux(sourceDemux), fDurationImbalance(0) {
+    fOurTrackNumber(trackNumber), fOurSourceDemux(sourceDemux), fDurationImbalance(0),
+    fOpusTrackNumber(0) {
   fPrevPresentationTime.tv_sec = 0; fPrevPresentationTime.tv_usec = 0;
 }
 

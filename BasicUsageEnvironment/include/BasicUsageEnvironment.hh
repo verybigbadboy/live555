@@ -13,7 +13,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // Basic Usage Environment: for a simple, non-scripted, console application
 // C++ header
 
@@ -75,6 +75,12 @@ protected:
   fd_set fReadSet;
   fd_set fWriteSet;
   fd_set fExceptionSet;
+
+private:
+#if defined(__WIN32__) || defined(_WIN32)
+  // Hack to work around a bug in Windows' "select()" implementation:
+  int fDummySocketNum;
+#endif
 };
 
 #endif

@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // A data structure that represents a session that consists of
 // potentially multiple (audio and/or video) sub-sessions
 // (This data structure is used for media *receivers* - i.e., clients.
@@ -176,6 +176,7 @@ public:
   RTPSource* rtpSource() { return fRTPSource; }
   RTCPInstance* rtcpInstance() { return fRTCPInstance; }
   unsigned rtpTimestampFrequency() const { return fRTPTimestampFrequency; }
+  Boolean rtcpIsMuxed() const { return fMultiplexRTCPWithRTP; }
   FramedSource* readSource() { return fReadSource; }
     // This is the source that client sinks read from.  It is usually
     // (but not necessarily) the same as "rtpSource()"
@@ -215,6 +216,8 @@ public:
 
   // General SDP attribute accessor functions:
   char const* attrVal_str(char const* attrName) const;
+      // returns "" if attribute doesn't exist (and has no default value), or is not a string
+  char const* attrVal_strToLower(char const* attrName) const;
       // returns "" if attribute doesn't exist (and has no default value), or is not a string
   unsigned attrVal_int(char const* attrName) const;
       // also returns 0 if attribute doesn't exist (and has no default value)
@@ -276,6 +279,7 @@ protected:
   Boolean parseSDPLine_c(char const* sdpLine);
   Boolean parseSDPLine_b(char const* sdpLine);
   Boolean parseSDPAttribute_rtpmap(char const* sdpLine);
+  Boolean parseSDPAttribute_rtcpmux(char const* sdpLine);
   Boolean parseSDPAttribute_control(char const* sdpLine);
   Boolean parseSDPAttribute_range(char const* sdpLine);
   Boolean parseSDPAttribute_fmtp(char const* sdpLine);
@@ -301,6 +305,7 @@ protected:
   char* fCodecName;
   char* fProtocolName;
   unsigned fRTPTimestampFrequency;
+  Boolean fMultiplexRTCPWithRTP;
   char* fControlPath; // holds optional a=control: string
   struct in_addr fSourceFilterAddr; // used for SSM
   unsigned fBandwidth; // in kilobits-per-second, from b= line

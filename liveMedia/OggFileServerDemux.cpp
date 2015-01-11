@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // A server demultiplexor for a Ogg file
 // Implementation
 
@@ -51,7 +51,7 @@ ServerMediaSubsession* OggFileServerDemux
   ServerMediaSubsession* result = OggFileServerMediaSubsession::createNew(*this, track);
   if (result != NULL) {
 #ifdef DEBUG
-    fprintf(stderr, "Created 'ServerMediaSubsession' object for track #%d: %s (%s)\n", track->trackNumber, track->codecID, track->mimeType);
+    fprintf(stderr, "Created 'ServerMediaSubsession' object for track #%d: (%s)\n", track->trackNumber, track->mimeType);
 #endif
   }
 

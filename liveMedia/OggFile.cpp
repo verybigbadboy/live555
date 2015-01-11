@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // A class that encapsulates an Ogg file.
 // Implementation
 
@@ -25,8 +25,10 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "SimpleRTPSink.hh"
 #include "TheoraVideoRTPSink.hh"
 
-////////// OggTrackTable definition /////////                                                       
-// For looking up and iterating over the file's tracks:                                            
+////////// OggTrackTable definition /////////
+
+// For looking up and iterating over the file's tracks:
+
 class OggTrackTable {
 public:
   OggTrackTable();

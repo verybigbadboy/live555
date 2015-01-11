@@ -13,7 +13,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // Basic Usage Environment: for a simple, non-scripted, console application
 // Implementation
 
@@ -33,7 +33,11 @@ BasicTaskScheduler* BasicTaskScheduler::createNew(unsigned maxSchedulerGranulari
 }
 
 BasicTaskScheduler::BasicTaskScheduler(unsigned maxSchedulerGranularity)
-  : fMaxSchedulerGranularity(maxSchedulerGranularity), fMaxNumSockets(0) {
+  : fMaxSchedulerGranularity(maxSchedulerGranularity), fMaxNumSockets(0)
+#if defined(__WIN32__) || defined(_WIN32)
+  , fDummySocketNum(-1)
+#endif
+{
   FD_ZERO(&fReadSet);
   FD_ZERO(&fWriteSet);
   FD_ZERO(&fExceptionSet);
@@ -42,6 +46,9 @@ BasicTaskScheduler::BasicTaskScheduler(unsigned maxSchedulerGranularity)
 }
 
 BasicTaskScheduler::~BasicTaskScheduler() {
+#if defined(__WIN32__) || defined(_WIN32)
+  if (fDummySocketNum >= 0) closeSocket(fDummySocketNum);
+#endif
 }
 
 void BasicTaskScheduler::schedulerTickTask(void* clientData) {
@@ -89,8 +96,9 @@ void BasicTaskScheduler::SingleStep(unsigned maxDelayTime) {
     if (err == WSAEINVAL && readSet.fd_count == 0) {
       err = EINTR;
       // To stop this from happening again, create a dummy socket:
-      int dummySocketNum = socket(AF_INET, SOCK_DGRAM, 0);
-      FD_SET((unsigned)dummySocketNum, &fReadSet);
+      if (fDummySocketNum >= 0) closeSocket(fDummySocketNum);
+      fDummySocketNum = socket(AF_INET, SOCK_DGRAM, 0);
+      FD_SET((unsigned)fDummySocketNum, &fReadSet);
     }
     if (err != EINTR) {
 #else
@@ -207,6 +215,9 @@ void BasicTaskScheduler::SingleStep(unsigned maxDelayTime) {
 void BasicTaskScheduler
   ::setBackgroundHandling(int socketNum, int conditionSet, BackgroundHandlerProc* handlerProc, void* clientData) {
   if (socketNum < 0) return;
+#if !defined(__WIN32__) && !defined(_WIN32) && defined(FD_SETSIZE)
+  if (socketNum >= (int)(FD_SETSIZE)) return;
+#endif
   FD_CLR((unsigned)socketNum, &fReadSet);
   FD_CLR((unsigned)socketNum, &fWriteSet);
   FD_CLR((unsigned)socketNum, &fExceptionSet);
@@ -228,6 +239,9 @@ void BasicTaskScheduler
 
 void BasicTaskScheduler::moveSocketHandling(int oldSocketNum, int newSocketNum) {
   if (oldSocketNum < 0 || newSocketNum < 0) return; // sanity check
+#if !defined(__WIN32__) && !defined(_WIN32) && defined(FD_SETSIZE)
+  if (oldSocketNum >= (int)(FD_SETSIZE) || newSocketNum >= (int)(FD_SETSIZE)) return; // sanity check
+#endif
   if (FD_ISSET(oldSocketNum, &fReadSet)) {FD_CLR((unsigned)oldSocketNum, &fReadSet); FD_SET((unsigned)newSocketNum, &fReadSet);}
   if (FD_ISSET(oldSocketNum, &fWriteSet)) {FD_CLR((unsigned)oldSocketNum, &fWriteSet); FD_SET((unsigned)newSocketNum, &fWriteSet);}
   if (FD_ISSET(oldSocketNum, &fExceptionSet)) {FD_CLR((unsigned)oldSocketNum, &fExceptionSet); FD_SET((unsigned)newSocketNum, &fExceptionSet);}

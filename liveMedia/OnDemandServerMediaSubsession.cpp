@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // A 'ServerMediaSubsession' object that creates new, unicast, "RTPSink"s
 // on demand.
 // Implementation
@@ -25,10 +25,18 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 OnDemandServerMediaSubsession
 ::OnDemandServerMediaSubsession(UsageEnvironment& env,
 				Boolean reuseFirstSource,
-				portNumBits initialPortNum)
+				portNumBits initialPortNum,
+				Boolean multiplexRTCPWithRTP)
   : ServerMediaSubsession(env),
-    fSDPLines(NULL), fReuseFirstSource(reuseFirstSource), fInitialPortNum(initialPortNum), fLastStreamToken(NULL) {
+    fSDPLines(NULL), fReuseFirstSource(reuseFirstSource),
+    fMultiplexRTCPWithRTP(multiplexRTCPWithRTP), fLastStreamToken(NULL) {
   fDestinationsHashTable = HashTable::create(ONE_WORD_HASH_KEYS);
+  if (fMultiplexRTCPWithRTP) {
+    fInitialPortNum = initialPortNum;
+  } else {
+    // Make sure RTP ports are even-numbered:
+    fInitialPortNum = (initialPortNum+1)&~1;
+  }
   gethostname(fCNAME, sizeof fCNAME);
   fCNAME[sizeof fCNAME-1] = '\0'; // just in case
 }
@@ -127,9 +135,10 @@ void OnDemandServerMediaSubsession
 	udpSink = BasicUDPSink::createNew(envir(), rtpGroupsock);
       } else {
 	// Normal case: We're streaming RTP (over UDP or TCP).  Create a pair of
-	// groupsocks (RTP and RTCP), with adjacent port numbers (RTP port number even):
+	// groupsocks (RTP and RTCP), with adjacent port numbers (RTP port number even).
+	// (If we're multiplexing RTCP and RTP over the same port number, it can be odd or even.)
 	NoReuse dummy(envir()); // ensures that we skip over ports that are already in use
-	for (portNumBits serverPortNum = fInitialPortNum; ; serverPortNum += 2) {
+	for (portNumBits serverPortNum = fInitialPortNum; ; ++serverPortNum) {
 	  struct in_addr dummyAddr; dummyAddr.s_addr = 0;
 
 	  serverRTPPort = serverPortNum;
@@ -139,12 +148,19 @@ void OnDemandServerMediaSubsession
 	    continue; // try again
 	  }
 
-	  serverRTCPPort = serverPortNum+1;
-	  rtcpGroupsock = new Groupsock(envir(), dummyAddr, serverRTCPPort, 255);
-	  if (rtcpGroupsock->socketNum() < 0) {
-	    delete rtpGroupsock;
-	    delete rtcpGroupsock;
-	    continue; // try again
+	  if (fMultiplexRTCPWithRTP) {
+	    // Use the RTP 'groupsock' object for RTCP as well:
+	    serverRTCPPort = serverRTPPort;
+	    rtcpGroupsock = rtpGroupsock;
+	  } else {
+	    // Create a separate 'groupsock' object (with the next (odd) port number) for RTCP:
+	    serverRTCPPort = ++serverPortNum;
+	    rtcpGroupsock = new Groupsock(envir(), dummyAddr, serverRTCPPort, 255);
+	    if (rtcpGroupsock->socketNum() < 0) {
+	      delete rtpGroupsock;
+	      delete rtcpGroupsock;
+	      continue; // try again
+	    }
 	  }
 
 	  break; // success
@@ -369,6 +385,7 @@ void OnDemandServerMediaSubsession
   unsigned char rtpPayloadType = rtpSink->rtpPayloadType();
   AddressString ipAddressStr(fServerAddressForSDP);
   char* rtpmapLine = rtpSink->rtpmapLine();
+  char const* rtcpmuxLine = fMultiplexRTCPWithRTP ? "a=rtcp-mux\r\n" : "";
   char const* rangeLine = rangeSDPLine();
   char const* auxSDPLine = getAuxSDPLine(rtpSink, inputSource);
   if (auxSDPLine == NULL) auxSDPLine = "";
@@ -380,12 +397,14 @@ void OnDemandServerMediaSubsession
     "%s"
     "%s"
     "%s"
+    "%s"
     "a=control:%s\r\n";
   unsigned sdpFmtSize = strlen(sdpFmt)
     + strlen(mediaType) + 5 /* max short len */ + 3 /* max char len */
     + strlen(ipAddressStr.val())
     + 20 /* max int len */
     + strlen(rtpmapLine)
+    + strlen(rtcpmuxLine)
     + strlen(rangeLine)
     + strlen(auxSDPLine)
     + strlen(trackId());
@@ -397,6 +416,7 @@ void OnDemandServerMediaSubsession
 	  ipAddressStr.val(), // c= address
 	  estBitrate, // b=AS:<bandwidth>
 	  rtpmapLine, // a=rtpmap:... (if present)
+	  rtcpmuxLine, // a=rtcp-mux:... (if present)
 	  rangeLine, // a=range:... (if present)
 	  auxSDPLine, // optional extra SDP line
 	  trackId()); // a=control:<track-id>
@@ -544,6 +564,7 @@ void StreamState::reclaim() {
   fMaster.closeStreamSource(fMediaSource); fMediaSource = NULL;
   if (fMaster.fLastStreamToken == this) fMaster.fLastStreamToken = NULL;
 
-  delete fRTPgs; fRTPgs = NULL;
-  delete fRTCPgs; fRTCPgs = NULL;
+  delete fRTPgs;
+  if (fRTCPgs != fRTPgs) delete fRTCPgs;
+  fRTPgs = NULL; fRTCPgs = NULL;
 }

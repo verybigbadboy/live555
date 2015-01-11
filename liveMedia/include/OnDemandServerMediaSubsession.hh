@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // A 'ServerMediaSubsession' object that creates new, unicast, "RTPSink"s
 // on demand.
 // C++ header
@@ -38,7 +38,8 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 class OnDemandServerMediaSubsession: public ServerMediaSubsession {
 protected: // we're a virtual base class
   OnDemandServerMediaSubsession(UsageEnvironment& env, Boolean reuseFirstSource,
-				portNumBits initialPortNum = 6970);
+				portNumBits initialPortNum = 6970,
+				Boolean multiplexRTCPWithRTP = False);
   virtual ~OnDemandServerMediaSubsession();
 
 protected: // redefined virtual functions
@@ -97,6 +98,10 @@ protected: // new virtual functions, defined by all subclasses
 				    unsigned char rtpPayloadTypeIfDynamic,
 				    FramedSource* inputSource) = 0;
 
+public:
+  void multiplexRTCPWithRTP() { fMultiplexRTCPWithRTP = True; }
+  // An alternative to passing the "multiplexRTCPWithRTP" parameter as True in the constructor
+
 private:
   void setSDPLinesFromRTPSink(RTPSink* rtpSink, FramedSource* inputSource,
 			      unsigned estBitrate);
@@ -109,6 +114,7 @@ protected:
 private:
   Boolean fReuseFirstSource;
   portNumBits fInitialPortNum;
+  Boolean fMultiplexRTCPWithRTP;
   void* fLastStreamToken;
   char fCNAME[100]; // for RTCP
   friend class StreamState;

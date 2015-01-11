@@ -13,15 +13,20 @@ You should have received a copy of the GNU Lesser General Public License
 along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // Usage Environment
 // Implementation
 
 #include "UsageEnvironment.hh"
 
-void UsageEnvironment::reclaim() {
+Boolean UsageEnvironment::reclaim() {
   // We delete ourselves only if we have no remainining state:
-  if (liveMediaPriv == NULL && groupsockPriv == NULL) delete this;
+  if (liveMediaPriv == NULL && groupsockPriv == NULL) {
+    delete this;
+    return True;
+  }
+
+  return False;
 }
 
 UsageEnvironment::UsageEnvironment(TaskScheduler& scheduler)

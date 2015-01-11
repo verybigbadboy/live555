@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2014 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2015 Live Networks, Inc.  All rights reserved.
 // A special object which, when created, sends a custom RTSP "REGISTER" command to a specified client.
 // Implementation
 
@@ -89,11 +89,11 @@ Boolean RTSPRegisterSender::setRequestFields(RequestRecord* request,
       sprintf(proxyURLSuffixParameterStr, proxyURLSuffixParameterFmt, request_REGISTER->proxyURLSuffix());
     }
 
-    char const* transportHeaderFmt = "Transport: reuse_connection=%d; preferred_delivery_protocol=%s%s\r\n";
+    char const* transportHeaderFmt = "Transport: %spreferred_delivery_protocol=%s%s\r\n";
     unsigned transportHeaderSize = strlen(transportHeaderFmt) + 100/*conservative*/ + strlen(proxyURLSuffixParameterStr);
     char* transportHeaderStr = new char[transportHeaderSize];
     sprintf(transportHeaderStr, transportHeaderFmt,
-	    request_REGISTER->reuseConnection(),
+	    request_REGISTER->reuseConnection() ? "reuse_connection; " : "",
 	    request_REGISTER->requestStreamingViaTCP() ? "interleaved" : "udp",
 	    proxyURLSuffixParameterStr);
     delete[] proxyURLSuffixParameterStr;
