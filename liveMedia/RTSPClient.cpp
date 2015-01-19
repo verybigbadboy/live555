@@ -1546,7 +1546,7 @@ void RTSPClient::handleResponseBytes(int newBytesRead) {
       do {
 	lineStart = nextLineStart;
 	nextLineStart = getLine(lineStart);
-      } while (lineStart[0] == '\0'); // skip over any blank lines at the start
+      } while (lineStart[0] == '\0' && nextLineStart != NULL); // skip over any blank lines at the start
       if (!parseResponseCode(lineStart, responseCode, responseStr)) {
 	// This does not appear to be a RTSP response; perhaps it's a RTSP request instead?
 	handleIncomingRequest();
