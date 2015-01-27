@@ -55,6 +55,7 @@ private:
   friend class InputESSourceRecord;
   class InputESSourceRecord* fInputSources;
   unsigned fVideoSourceCounter, fAudioSourceCounter;
+  Boolean fAwaitingBackgroundDelivery;
 };
 
 #endif
