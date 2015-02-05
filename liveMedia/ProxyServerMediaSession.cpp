@@ -112,7 +112,9 @@ ProxyServerMediaSession::~ProxyServerMediaSession() {
   }
 
   // Begin by sending a "TEARDOWN" command (without checking for a response):
-  if (fProxyRTSPClient != NULL) fProxyRTSPClient->sendTeardownCommand(*fClientMediaSession, NULL, fProxyRTSPClient->auth());
+  if (fProxyRTSPClient != NULL && fClientMediaSession != NULL) {
+    fProxyRTSPClient->sendTeardownCommand(*fClientMediaSession, NULL, fProxyRTSPClient->auth());
+  }
 
   // Then delete our state:
   Medium::close(fClientMediaSession);
@@ -418,6 +420,10 @@ ProxyServerMediaSubsession::~ProxyServerMediaSubsession() {
   if (verbosityLevel() > 0) {
     envir() << *this << "::~ProxyServerMediaSubsession()\n";
   }
+
+  if (fClientMediaSubsession.rtcpInstance() != NULL) {
+    fClientMediaSubsession.rtcpInstance()->setByeHandler(NULL, NULL);
+  }
 }
 
 FramedSource* ProxyServerMediaSubsession::createNewStreamSource(unsigned clientSessionId, unsigned& estBitrate) {
@@ -668,7 +674,9 @@ void ProxyServerMediaSubsession::subsessionByeHandler() {
 
   // This "BYE" signals that our input source has (effectively) closed, so pass this onto the front-end clients:
   fHaveSetupStream = False; // hack to stop "PAUSE" getting sent by:
-  fClientMediaSubsession.readSource()->handleClosure();
+  if (fClientMediaSubsession.readSource() != NULL) {
+    fClientMediaSubsession.readSource()->handleClosure();
+  }
 
   // And then treat this as if we had lost connection to the back-end server,
   // and can reestablish streaming from it only by sending another "DESCRIBE":
