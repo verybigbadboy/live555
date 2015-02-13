@@ -21,10 +21,12 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "RTCP.hh"
 #include "GroupsockHelper.hh"
 #include "rtcp_from_spec.h"
+#if defined(__WIN32__) || defined(_WIN32) || defined(_QNX4)
+#define snprintf _snprintf
+#endif
 
 ////////// RTCPMemberDatabase //////////
 
-#define DEBUG 1 //#####@@@@@
 class RTCPMemberDatabase {
 public:
   RTCPMemberDatabase(RTCPInstance& ourRTCPInstance)
