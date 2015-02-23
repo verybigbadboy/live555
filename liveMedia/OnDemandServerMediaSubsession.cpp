@@ -304,7 +304,7 @@ float OnDemandServerMediaSubsession::getCurrentNPT(void* streamToken) {
 
     return streamState->startNPT()
       + (rtpSink->mostRecentPresentationTime().tv_sec - rtpSink->initialPresentationTime().tv_sec)
-      + (rtpSink->mostRecentPresentationTime().tv_sec - rtpSink->initialPresentationTime().tv_sec)/1000000.0f;
+      + (rtpSink->mostRecentPresentationTime().tv_usec - rtpSink->initialPresentationTime().tv_usec)/1000000.0f;
   } while (0);
 
   return 0.0;
