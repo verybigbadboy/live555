@@ -34,7 +34,7 @@ public:
   ProxyServerMediaSubsession(MediaSubsession& mediaSubsession);
   virtual ~ProxyServerMediaSubsession();
 
-  char const* codecName() const { return fClientMediaSubsession.codecName(); }
+  char const* codecName() const { return fCodecName; }
 
 private: // redefined virtual functions
   virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
@@ -53,6 +53,7 @@ private:
 private:
   friend class ProxyRTSPClient;
   MediaSubsession& fClientMediaSubsession; // the 'client' media subsession object that corresponds to this 'server' media subsession
+  char const* fCodecName;  // copied from "fClientMediaSubsession" once it's been set up
   ProxyServerMediaSubsession* fNext; // used when we're part of a queue
   Boolean fHaveSetupStream;
 };
@@ -409,7 +410,8 @@ void ProxyRTSPClient::handleSubsessionTimeout() {
 
 ProxyServerMediaSubsession::ProxyServerMediaSubsession(MediaSubsession& mediaSubsession)
   : OnDemandServerMediaSubsession(mediaSubsession.parentSession().envir(), True/*reuseFirstSource*/),
-    fClientMediaSubsession(mediaSubsession), fNext(NULL), fHaveSetupStream(False) {
+    fClientMediaSubsession(mediaSubsession), fCodecName(strDup(mediaSubsession.codecName())),
+    fNext(NULL), fHaveSetupStream(False) {
 }
 
 UsageEnvironment& operator<<(UsageEnvironment& env, const ProxyServerMediaSubsession& psmss) { // used for debugging
@@ -421,9 +423,7 @@ ProxyServerMediaSubsession::~ProxyServerMediaSubsession() {
     envir() << *this << "::~ProxyServerMediaSubsession()\n";
   }
 
-  if (fClientMediaSubsession.rtcpInstance() != NULL) {
-    fClientMediaSubsession.rtcpInstance()->setByeHandler(NULL, NULL);
-  }
+  delete[] fCodecName;
 }
 
 FramedSource* ProxyServerMediaSubsession::createNewStreamSource(unsigned clientSessionId, unsigned& estBitrate) {
