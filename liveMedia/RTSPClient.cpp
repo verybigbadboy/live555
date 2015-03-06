@@ -210,6 +210,26 @@ Boolean RTSPClient::lookupByName(UsageEnvironment& env,
   return True;
 }
 
+static void copyUsernameOrPasswordStringFromURL(char* dest, char const* src, unsigned len) {
+  // Normally, we just copy from the source to the destination.  However, if the source contains
+  // %-encoded characters, then we decode them while doing the copy:
+  while (len > 0) {
+    int nBefore = 0;
+    int nAfter = 0;
+    
+    if (*src == '%' && len >= 3 && sscanf(src+1, "%n%2hhx%n", &nBefore, dest, &nAfter) == 1) {
+      unsigned codeSize = nAfter - nBefore; // should be 1 or 2
+
+      ++dest;
+      src += (1 + codeSize);
+      len -= (1 + codeSize);
+    } else {
+      *dest++ = *src++;
+      --len;
+    }
+  }
+}
+
 Boolean RTSPClient::parseRTSPURL(UsageEnvironment& env, char const* url,
 				 char*& username, char*& password,
 				 NetAddress& address,
@@ -243,15 +263,13 @@ Boolean RTSPClient::parseRTSPURL(UsageEnvironment& env, char const* url,
 	char const* usernameStart = from;
 	unsigned usernameLen = colonPasswordStart - usernameStart;
 	username = new char[usernameLen + 1] ; // allow for the trailing '\0'
-	for (unsigned i = 0; i < usernameLen; ++i) username[i] = usernameStart[i];
-	username[usernameLen] = '\0';
+	copyUsernameOrPasswordStringFromURL(username, usernameStart, usernameLen);
 
 	char const* passwordStart = colonPasswordStart;
 	if (passwordStart < p) ++passwordStart; // skip over the ':'
 	unsigned passwordLen = p - passwordStart;
 	password = new char[passwordLen + 1]; // allow for the trailing '\0'
-	for (unsigned j = 0; j < passwordLen; ++j) password[j] = passwordStart[j];
-	password[passwordLen] = '\0';
+	copyUsernameOrPasswordStringFromURL(password, passwordStart, passwordLen);
 
 	from = p + 1; // skip over the '@'
 	break;
