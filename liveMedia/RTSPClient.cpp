@@ -228,6 +228,7 @@ static void copyUsernameOrPasswordStringFromURL(char* dest, char const* src, uns
       --len;
     }
   }
+  *dest = '\0';
 }
 
 Boolean RTSPClient::parseRTSPURL(UsageEnvironment& env, char const* url,
