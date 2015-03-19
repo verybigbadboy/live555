@@ -1247,23 +1247,34 @@ Boolean RTSPClient::handleAuthenticationFailure(char const* paramsStr) {
   if (paramsStr == NULL) return False; // There was no "WWW-Authenticate:" header; we can't proceed.
 
   // Fill in "fCurrentAuthenticator" with the information from the "WWW-Authenticate:" header:
-  Boolean alreadyHadRealm = fCurrentAuthenticator.realm() != NULL;
+  Boolean realmHasChanged = False; // by default
+  Boolean isStale = False; // by default
   char* realm = strDupSize(paramsStr);
   char* nonce = strDupSize(paramsStr);
+  char* stale = strDupSize(paramsStr);
   Boolean success = True;
-  if (sscanf(paramsStr, "Digest realm=\"%[^\"]\", nonce=\"%[^\"]\"", realm, nonce) == 2) {
+  if (sscanf(paramsStr, "Digest realm=\"%[^\"]\", nonce=\"%[^\"]\", stale=%[a-zA-Z]", realm, nonce, stale) == 3) {
+    realmHasChanged = fCurrentAuthenticator.realm() == NULL || strcmp(fCurrentAuthenticator.realm(), realm) != 0;
+    isStale = _strncasecmp(stale, "true", 4) == 0;
+    fCurrentAuthenticator.setRealmAndNonce(realm, nonce);
+  } else if (sscanf(paramsStr, "Digest realm=\"%[^\"]\", nonce=\"%[^\"]\"", realm, nonce) == 2) {
+    realmHasChanged = fCurrentAuthenticator.realm() == NULL || strcmp(fCurrentAuthenticator.realm(), realm) != 0;
     fCurrentAuthenticator.setRealmAndNonce(realm, nonce);
   } else if (sscanf(paramsStr, "Basic realm=\"%[^\"]\"", realm) == 1 && fAllowBasicAuthentication) {
+    realmHasChanged = fCurrentAuthenticator.realm() == NULL || strcmp(fCurrentAuthenticator.realm(), realm) != 0;
     fCurrentAuthenticator.setRealmAndNonce(realm, NULL); // Basic authentication
   } else {
     success = False; // bad "WWW-Authenticate:" header
   }
-  delete[] realm; delete[] nonce;
+  delete[] realm; delete[] nonce; delete[] stale;
 
-  if (alreadyHadRealm || fCurrentAuthenticator.username() == NULL || fCurrentAuthenticator.password() == NULL) {
-    // We already had a 'realm', or don't have a username and/or password,
-    // so the new "WWW-Authenticate:" header information won't help us.  We remain unauthenticated.
-    success = False;
+  if (success) {
+    if ((!realmHasChanged && !isStale) || fCurrentAuthenticator.username() == NULL || fCurrentAuthenticator.password() == NULL) {
+      // We already tried with the same realm (and a non-stale nonce),
+      // or don't have a username and/or password, so the new "WWW-Authenticate:" header
+      // information won't help us.  We remain unauthenticated.
+      success = False;
+    }
   }
 
   return success;
