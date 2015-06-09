@@ -90,6 +90,7 @@ public: // should be protected, but some old compilers complain otherwise
 
   protected:
     friend class GenericMediaServer;
+    friend class ClientSession;
     GenericMediaServer& fOurServer;
     int fOurSocket;
     struct sockaddr_in fClientAddr;
@@ -108,6 +109,7 @@ public: // should be protected, but some old compilers complain otherwise
 
   protected:
     friend class GenericMediaServer;
+    friend class ClientConnection;
     GenericMediaServer& fOurServer;
     u_int32_t fOurSessionId;
     ServerMediaSession* fOurServerMediaSession;

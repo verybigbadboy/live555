@@ -479,7 +479,7 @@ void RTSPServer::RTSPClientConnection
   } while (0);
   
   if (session != NULL) {
-    // Decrement it's reference count, now that we're done using it:
+    // Decrement its reference count, now that we're done using it:
     session->decrementReferenceCount();
     if (session->referenceCount() == 0 && session->deleteWhenUnreferenced()) {
       fOurServer.removeServerMediaSession(session);

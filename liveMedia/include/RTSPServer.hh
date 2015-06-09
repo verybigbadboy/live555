@@ -143,6 +143,7 @@ public: // should be protected, but some old compilers complain otherwise
     virtual ~RTSPClientConnection();
 
     friend class RTSPServer;
+    friend class RTSPClientSession;
 
     // Make the handler functions for each command virtual, to allow subclasses to reimplement them, if necessary:
     virtual void handleCmd_OPTIONS();
@@ -206,6 +207,7 @@ public: // should be protected, but some old compilers complain otherwise
     virtual ~RTSPClientSession();
 
     friend class RTSPServer;
+    friend class RTSPClientConnection;
     // Make the handler functions for each command virtual, to allow subclasses to redefine them:
     virtual void handleCmd_SETUP(RTSPClientConnection* ourClientConnection,
 				 char const* urlPreSuffix, char const* urlSuffix, char const* fullRequestStr);
