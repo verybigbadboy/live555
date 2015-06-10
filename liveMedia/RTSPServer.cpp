@@ -380,7 +380,7 @@ RTSPServer::RTSPClientConnection::~RTSPClientConnection() {
     delete[] fOurSessionCookie;
   }
   
-  closeSockets();
+  closeSocketsRTSP();
 }
 
 // Special mechanism for handling our custom "REGISTER" command:
@@ -701,7 +701,7 @@ void RTSPServer::RTSPClientConnection::resetRequestBuffer() {
   fBase64RemainderCount = 0;
 }
 
-void RTSPServer::RTSPClientConnection::closeSockets() {
+void RTSPServer::RTSPClientConnection::closeSocketsRTSP() {
   // First, tell our server to stop any streaming that it might be doing over our output socket:
   fOurRTSPServer.stopTCPStreamingOnSocket(fClientOutputSocket);
 
@@ -712,7 +712,7 @@ void RTSPServer::RTSPClientConnection::closeSockets() {
   }
   fClientOutputSocket = -1;
   
-  GenericMediaServer::ClientConnection::closeSockets(); // closes fClientInputSocket
+  closeSockets(); // closes fClientInputSocket
 }
 
 void RTSPServer::RTSPClientConnection::handleAlternativeRequestByte(void* instance, u_int8_t requestByte) {
