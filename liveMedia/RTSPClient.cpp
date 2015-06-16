@@ -814,6 +814,10 @@ Boolean RTSPClient::setRequestFields(RequestRecord* request,
       extraHeadersWereAllocated = True;
       sprintf(extraHeaders, "%s%s%s%s", sessionStr, scaleStr, speedStr, rangeStr);
       delete[] sessionStr; delete[] scaleStr; delete[] speedStr; delete[] rangeStr;
+    } else {
+      // Create a "Session:" header; this makes up our 'extra headers':
+      extraHeaders = createSessionString(sessionId);
+      extraHeadersWereAllocated = True;
     }
   }
 
